@@ -1,0 +1,11 @@
+Change SSH default port
+
+nano /etc/ssh/sshd_config
+
+Remove comment of port 22 and replace port number
+
+Verify listening port of ssh
+netstat -tulpn | grep ssh
+
+service sshd restart
+
