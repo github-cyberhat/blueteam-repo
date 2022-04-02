@@ -1,0 +1,8 @@
+#CLAMAV Installation https://www.atlantic.net/vps-hosting/how-to-install-clamav-on-ubuntu-20-04-and-scan-for-vulnerabilities/
+
+apt-get install clamav clamav-daemon -y
+
+systemctl stop clamav-freshclam
+freshclam
+systemctl start clamav-freshclam
+systemctl enable clamav-freshclam
