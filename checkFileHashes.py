@@ -1,3 +1,6 @@
+#Run crontab every 1 minute: */1 * * * * DISPLAY=:0.0 /usr/bin/env python3 /home/ubuntu/checkFileHashes.py
+
+
 import hashlib
 import json
 import logging
