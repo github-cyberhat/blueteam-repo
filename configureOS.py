@@ -10,7 +10,7 @@ RHEL_COMMANDS = [
     "sudo yum update",
     "yum install -y epel-release"
     "yum -y install clamav-server clamav-data clamav-update clamav-filesystem clamav clamav-scanner-systemd clamav-devel clamav-lib clamav-server-systemd",
-    "yum install Fail2ban",
+    "yum install fail2ban",
     "yum remove liblog4j-java"
 ]
 
@@ -22,7 +22,7 @@ DEBIAN_COMMANDS = [
     "freshclam",
     "systemctl start clamav-freshclam",
     "apt install build-essential libpcap-dev libpcre3-dev libnet1-dev zlib1g-dev luajit hwloc libdnet-dev libdumbnet-dev bison flex liblzma-dev openssl libssl-dev pkg-config libhwloc-dev cmake cpputest libsqlite3-dev uuid-dev libcmocka-dev libnetfilter-queue-dev libmnl-dev autotools-dev libluajit-5.1-dev libunwind-dev",
-    "apt install Fail2ban",
+    "apt install fail2ban",
     "apt purge liblog4j-java"
 ]
 
@@ -46,29 +46,30 @@ def secure_passwords_change_usernames():
     print("[x] Securing passwords...\n")
     secure_str = ''.join((secrets.choice(string.ascii_letters) for i in range(20)))
     password = ''.join((secrets.choice(string.ascii_letters + string.digits + string.punctuation) for i in range(20)))
-
+    default_user = input("[x] Please enter the default system user:\n")
     with open("/etc/passwd", "r") as users_file:
         for line in users_file.readlines():
             user_name, _ = line.split(":", 1)
             secure_str = ''.join((secrets.choice(string.ascii_letters) for i in range(20)))
             password = ''.join(
                 (secrets.choice(string.ascii_letters + string.digits + string.punctuation) for i in range(20)))
-            if user_name not in ["root", "cyberuser2", "www-data", "apache"]:
+            if user_name not in ["root", "cyberuser2", "www-data", "apache"] and user_name != default_user:
                 print(f"[x] Securing password of user '{user_name}'\n")
                 subprocess.run(["passwd", user_name], input=f"{password}\n{password}".encode("utf-8"))
-                print(f"[x] Changing username of user '{user_name}'\n")
-                subprocess.run(f"usermod -l {user_name} {user_name + '1'}")
+                if user_name not in ["daemon", "bin"]:
+                    print(f"[x] Changing username of user '{user_name}'\n")
+                    # subprocess.run(f"usermod -l {user_name} {user_name + '1'}")
 
 
 def configure_firewall():
     print("[x] Configuring IP tables rules...\n")
     commands = [
-        "iptables -A INPUT -p tcp -s {ip}/24 --dport {port} -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT",
+        "iptables -A INPUT -p tcp -s {ip} --dport {port} -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT",
         "iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT",
         "iptables -A INPUT -i eth1 -s 0.0.0.0/0 -j LOG --log-prefix \"IP_SPOOF A: \"",
         "iptables -A INPUT -i eth1 -s 0.0.0.0/0 -j DROP"
     ]
-    subnet = input("- Please enter your subnet (format x.x.x.0):\n")
+    subnet = input("- Please enter your IP address:\n")
     port = int(input("- Please enter the defined SSH port:\n"))
 
     with subprocess.Popen("/bin/bash", stdin=subprocess.PIPE) as popen:
@@ -84,7 +85,7 @@ def set_directory_permissions():
     for directory in directories:
         with subprocess.Popen("/bin/bash", stdin=subprocess.PIPE) as popen:
             print(f"[x] Changing permissions for {directory} \n")
-            popen.communicate(f"chmod -R 744 xyz /{directory}".encode("utf-8"))
+            popen.communicate(f"chmod -R 744 /{directory}".encode("utf-8"))
 
 
 if __name__ == "__main__":
